@@ -1,3 +1,10 @@
 pandas
 matplotlib
 pymupdf
+streamlit
+os
+datetime
+sys
+matplotlib
+re
+numpy
