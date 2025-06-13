@@ -16,7 +16,7 @@ stadium_lookup = {
     'LAK_ERI24': 'Crushers Stadium',
     'SCH_BOO': 'Wintrust Field',
     'WIN_CIT29': 'Ozinga Field',
-    "FLO_Y'A": 'Thomas More Stadium',  
+    "FLO_Y'A": 'Thomas More Stadium',
     'OTT_TIT': 'Ottawa Stadium',
     'x': 'Trustmark Park',
     'x': 'Skylands Stadium',
@@ -89,7 +89,8 @@ if st.session_state.page == 'dashboard':
             if not required_cols.issubset(set(game_df.columns)):
                 continue
 
-            first_valid = game_df.dropna(subset=['PitcherTeam', 'BatterTeam', 'Time'])
+            first_valid = game_df.dropna(
+                subset=['PitcherTeam', 'BatterTeam', 'Time'])
             if first_valid.empty:
                 continue
 
@@ -99,8 +100,10 @@ if st.session_state.page == 'dashboard':
             team1 = team_name_lookup.get(team1_raw, team1_raw)
             team2 = team_name_lookup.get(team2_raw, team2_raw)
 
-            game_date = pd.to_datetime(first_row.get('Date', file.split(".csv")[0]), errors='coerce')
-            date_str = game_date.strftime('%B %d, %Y') if not pd.isnull(game_date) else "Unknown Date"
+            game_date = pd.to_datetime(first_row.get(
+                'Date', file.split(".csv")[0]), errors='coerce')
+            date_str = game_date.strftime('%B %d, %Y') if not pd.isnull(
+                game_date) else "Unknown Date"
 
             raw_time = str(first_row['Time'])
             try:
@@ -115,18 +118,21 @@ if st.session_state.page == 'dashboard':
         except Exception:
             continue
 
-    preview_entries = sorted(preview_entries, key=lambda x: x[0] or pd.Timestamp.max)
+    preview_entries = sorted(
+        preview_entries, key=lambda x: x[0] or pd.Timestamp.max)
     preview_labels = [entry[1] for entry in preview_entries]
     file_map = {entry[1]: entry[2] for entry in preview_entries}
-    
+
     if preview_labels:
-        selected_label = st.sidebar.selectbox("Click a game to preview", preview_labels)
+        selected_label = st.sidebar.selectbox(
+            "Click a game to preview", preview_labels)
         selected_file = file_map[selected_label]
         if st.checkbox(f"Show preview of: {selected_label}", value=False):
             preview_df = pd.read_csv(os.path.join(DATA, selected_file))
             preview_df.columns = preview_df.columns.str.strip()
 
-            required_cols = {'Batter', 'Pitcher', 'PitcherTeam', 'BatterTeam', 'RunsScored'}
+            required_cols = {'Batter', 'Pitcher',
+                             'PitcherTeam', 'BatterTeam', 'RunsScored'}
             if not required_cols.issubset(preview_df.columns):
                 st.warning("Preview data is missing necessary columns.")
             else:
@@ -135,8 +141,10 @@ if st.session_state.page == 'dashboard':
                 team1 = team_name_lookup.get(team1_raw, team1_raw)
                 team2 = team_name_lookup.get(team2_raw, team2_raw)
 
-                team1_score = preview_df[preview_df['PitcherTeam'] == team2_raw]['RunsScored'].sum()
-                team2_score = preview_df[preview_df['PitcherTeam'] == team1_raw]['RunsScored'].sum()
+                team1_score = preview_df[preview_df['PitcherTeam']
+                                         == team2_raw]['RunsScored'].sum()
+                team2_score = preview_df[preview_df['PitcherTeam']
+                                         == team1_raw]['RunsScored'].sum()
 
                 st.subheader("Final Score")
                 st.markdown(
@@ -151,10 +159,13 @@ if st.session_state.page == 'dashboard':
 
                 def get_lineup(df, team_raw_name):
                     team_df = df[df['BatterTeam'] == team_raw_name]
-                    lineup = team_df.drop_duplicates(subset='Batter')['Batter'].tolist()[:9]
-                    lineup = [f"{i+1}. {b.split(',')[0].strip()}" for i, b in enumerate(lineup)]
+                    lineup = team_df.drop_duplicates(subset='Batter')[
+                        'Batter'].tolist()[:9]
+                    lineup = [
+                        f"{i+1}. {b.split(',')[0].strip()}" for i, b in enumerate(lineup)]
 
-                    pitcher_series = df[df['PitcherTeam'] == team_raw_name]['Pitcher'].dropna()
+                    pitcher_series = df[df['PitcherTeam']
+                                        == team_raw_name]['Pitcher'].dropna()
                     starting_pitcher = pitcher_series.iloc[0] if not pitcher_series.empty else "Unknown"
                     sp_last = starting_pitcher.split(",")[0].strip()
                     lineup.append(f"SP: {sp_last}")
@@ -166,11 +177,13 @@ if st.session_state.page == 'dashboard':
                 col1, col2 = st.columns(2)
                 with col1:
                     lineup1 = get_lineup(preview_df, team1_raw)
-                    st.dataframe(lineup1, hide_index=True, use_container_width=True)
+                    st.dataframe(lineup1, hide_index=True,
+                                 use_container_width=True)
 
                 with col2:
                     lineup2 = get_lineup(preview_df, team2_raw)
-                    st.dataframe(lineup2, hide_index=True, use_container_width=True)
+                    st.dataframe(lineup2, hide_index=True,
+                                 use_container_width=True)
 
     csv_files = [f for f in os.listdir(DATA) if f.endswith(".csv")]
     dataframes = [pd.read_csv(os.path.join(DATA, f)) for f in csv_files]
@@ -211,7 +224,7 @@ if st.session_state.page == 'dashboard':
 
                 if 'PitcherThrows' in df.columns:
                     split = st.radio("Pitcher Handedness", [
-                                 'All', 'Right', 'Left'], key="handedness_filter")
+                        'All', 'Right', 'Left'], key="handedness_filter")
                 if split != 'All':
                     hitter_df = hitter_df[hitter_df['PitcherThrows'] == split]
 
@@ -219,13 +232,16 @@ if st.session_state.page == 'dashboard':
                     st.warning(
                         f"No batted ball data available for {display_name} against selected handedness.")
                 else:
-                    required_cols = ['AutoPitchType', 'PlayResult', 'ExitSpeed', 'Angle']
+                    required_cols = ['AutoPitchType',
+                                     'PlayResult', 'ExitSpeed', 'Angle']
                 if all(col in hitter_df.columns for col in required_cols):
                     def calculate_batting_stats(group):
-                        in_play = group['PlayResult'].isin(['Single', 'Double', 'Triple', 'HomeRun', 'Out'])
+                        in_play = group['PlayResult'].isin(
+                            ['Single', 'Double', 'Triple', 'HomeRun', 'Out'])
                         batted = group[in_play]
 
-                        hits = batted['PlayResult'].isin(['Single', 'Double', 'Triple', 'HomeRun']).sum()
+                        hits = batted['PlayResult'].isin(
+                            ['Single', 'Double', 'Triple', 'HomeRun']).sum()
                         total = len(batted)
                         avg = hits / total if total else 0
 
@@ -276,33 +292,41 @@ if st.session_state.page == 'dashboard':
                     st.warning(
                         "No batted ball data available for this hitter against selected handedness.")
 
-                hits = hitter_df[hitter_df['PlayResult'].isin(['Single', 'Double', 'Triple', 'HomeRun'])]
-                hits = hits.dropna(subset=['Distance', 'Bearing', 'AutoPitchType'])
-                hits['x'] = hits['Distance'] * np.sin(np.radians(hits['Bearing']))
-                hits['y'] = hits['Distance'] * np.cos(np.radians(hits['Bearing']))
+                hits = hitter_df[hitter_df['PlayResult'].isin(
+                    ['Single', 'Double', 'Triple', 'HomeRun'])]
+                hits = hits.dropna(
+                    subset=['Distance', 'Bearing', 'AutoPitchType'])
+                hits['x'] = hits['Distance'] * \
+                    np.sin(np.radians(hits['Bearing']))
+                hits['y'] = hits['Distance'] * \
+                    np.cos(np.radians(hits['Bearing']))
 
                 fig, ax = plt.subplots(figsize=(6, 6))
 
                 for r in [100, 200, 300, 400, 500]:
-                    circle = plt.Circle((0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
+                    circle = plt.Circle(
+                        (0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
                     ax.add_patch(circle)
-                    ax.text(0, r + 5, str(r), ha='center', va='bottom', fontsize=8, color='orange')
+                    ax.text(0, r + 5, str(r), ha='center',
+                            va='bottom', fontsize=8, color='orange')
 
                 ax.set_xlim(-250, 250)
                 ax.set_ylim(0, 500)
                 ax.set_aspect('equal', adjustable='box')
                 ax.axis('off')
 
-
                 pitch_types = hits['AutoPitchType'].unique()
                 colors = plt.cm.get_cmap('tab10', len(pitch_types))
-                pitch_color_map = {ptype: colors(i) for i, ptype in enumerate(pitch_types)}
+                pitch_color_map = {ptype: colors(
+                    i) for i, ptype in enumerate(pitch_types)}
 
                 for ptype in pitch_types:
                     subset = hits[hits['AutoPitchType'] == ptype]
-                    ax.scatter(subset['x'], subset['y'], label=ptype, color=pitch_color_map[ptype], s=40, edgecolors='black')
+                    ax.scatter(subset['x'], subset['y'], label=ptype,
+                               color=pitch_color_map[ptype], s=40, edgecolors='black')
 
-                ax.legend(title='Pitch Type', loc='upper left', fontsize='small', title_fontsize='medium')
+                ax.legend(title='Pitch Type', loc='upper left',
+                          fontsize='small', title_fontsize='medium')
                 left_col, _ = st.columns([1, 1.5])
                 with left_col:
                     st.markdown("### Spray Chart (Pitch Type)")
