@@ -62,7 +62,6 @@ if st.session_state.page == 'home':
     st.markdown("""
         <p style="font-size: 1.2em; margin-bottom: 1.5em;">
             Use this dashboard to analyze player performance. 
-            Start by clicking the button below.
         </p>
     """, unsafe_allow_html=True)
 
@@ -113,7 +112,7 @@ if st.session_state.page == 'dashboard':
 
             stadium = stadium_lookup.get(team1_raw, "Unknown Ballpark")
 
-            label = f"{team1} vs {team2} @ {stadium} – {date_str} at {game_time}"
+            label = f"{team1} vs {team2} @ {stadium} on {date_str} - First Pitch at {game_time}"
             preview_entries.append((game_date, label, file))
         except Exception:
             continue
@@ -124,90 +123,118 @@ if st.session_state.page == 'dashboard':
     file_map = {entry[1]: entry[2] for entry in preview_entries}
 
     if preview_labels:
+        preview_labels_with_blank = [""] + preview_labels
         selected_label = st.sidebar.selectbox(
-            "Click a game to preview", preview_labels)
-        selected_file = file_map[selected_label]
-        if st.checkbox(f"Show preview of: {selected_label}", value=False):
-            preview_df = pd.read_csv(os.path.join(DATA, selected_file))
-            preview_df.columns = preview_df.columns.str.strip()
+            "Click a game to preview", preview_labels_with_blank)
 
-            required_cols = {'Batter', 'Pitcher',
-                             'PitcherTeam', 'BatterTeam', 'RunsScored'}
-            if not required_cols.issubset(preview_df.columns):
-                st.warning("Preview data is missing necessary columns.")
-            else:
-                teams = preview_df[['PitcherTeam', 'BatterTeam']].iloc[0]
-                team1_raw, team2_raw = teams['PitcherTeam'], teams['BatterTeam']
-                team1 = team_name_lookup.get(team1_raw, team1_raw)
-                team2 = team_name_lookup.get(team2_raw, team2_raw)
+        if not selected_label:
+            st.markdown(
+                "<span style='color: gray;'>Please select a game from the sidebar to view its preview.</span>",
+                unsafe_allow_html=True
+            )
+        else:
+            show_preview = st.checkbox(
+                f"Show preview of: {selected_label}", value=False)
+            if show_preview:
+                selected_file = file_map[selected_label]
+                preview_df = pd.read_csv(os.path.join(DATA, selected_file))
+                preview_df.columns = preview_df.columns.str.strip()
 
-                team1_score = preview_df[preview_df['PitcherTeam']
-                                         == team2_raw]['RunsScored'].sum()
-                team2_score = preview_df[preview_df['PitcherTeam']
-                                         == team1_raw]['RunsScored'].sum()
+                required_cols = {'Batter', 'Pitcher',
+                                 'PitcherTeam', 'BatterTeam', 'RunsScored'}
+                if not required_cols.issubset(preview_df.columns):
+                    st.warning("Preview data is missing necessary columns.")
+                else:
+                    teams = preview_df[['PitcherTeam', 'BatterTeam']].iloc[0]
+                    team1_raw, team2_raw = teams['PitcherTeam'], teams['BatterTeam']
+                    team1 = team_name_lookup.get(team1_raw, team1_raw)
+                    team2 = team_name_lookup.get(team2_raw, team2_raw)
 
-                st.subheader("Final Score")
-                st.markdown(
-                    f"""
-                    <div style="font-size: 1.2em; line-height: 1.6;">
-                        <strong>{team_name_lookup.get(team1_raw, team1_raw)}:</strong> {int(team1_score)}<br>
-                        <strong>{team_name_lookup.get(team2_raw, team2_raw)}:</strong> {int(team2_score)}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                    team1_score = preview_df[preview_df['PitcherTeam']
+                                             == team2_raw]['RunsScored'].sum()
+                    team2_score = preview_df[preview_df['PitcherTeam']
+                                             == team1_raw]['RunsScored'].sum()
 
-                def get_lineup(df, team_raw_name):
-                    team_df = df[df['BatterTeam'] == team_raw_name]
-                    lineup = team_df.drop_duplicates(subset='Batter')[
-                        'Batter'].tolist()[:9]
-                    lineup = [
-                        f"{i+1}. {b.split(',')[0].strip()}" for i, b in enumerate(lineup)]
+                    st.subheader("Final Score")
+                    st.markdown(
+                        f"""
+                        <div style="font-size: 1.2em; line-height: 1.6;">
+                            <strong>{team_name_lookup.get(team1_raw, team1_raw)}:</strong> {int(team1_score)}<br>
+                            <strong>{team_name_lookup.get(team2_raw, team2_raw)}:</strong> {int(team2_score)}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-                    pitcher_series = df[df['PitcherTeam']
-                                        == team_raw_name]['Pitcher'].dropna()
-                    starting_pitcher = pitcher_series.iloc[0] if not pitcher_series.empty else "Unknown"
-                    sp_last = starting_pitcher.split(",")[0].strip()
-                    lineup.append(f"SP: {sp_last}")
+                    def get_lineup(df, team_raw_name):
+                        team_df = df[df['BatterTeam'] == team_raw_name]
+                        lineup = team_df.drop_duplicates(subset='Batter')[
+                            'Batter'].tolist()[:9]
+                        lineup = [
+                            f"{i+1}. {b.split(',')[0].strip()}" for i, b in enumerate(lineup)]
 
-                    return pd.DataFrame({team_name_lookup.get(team_raw_name, team_raw_name): lineup})
+                        pitcher_series = df[df['PitcherTeam']
+                                            == team_raw_name]['Pitcher'].dropna()
+                        starting_pitcher = pitcher_series.iloc[0] if not pitcher_series.empty else "Unknown"
+                        sp_last = starting_pitcher.split(",")[0].strip()
+                        lineup.append(f"SP: {sp_last}")
 
-                st.write("")
+                        return pd.DataFrame({team_name_lookup.get(team_raw_name, team_raw_name): lineup})
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    lineup1 = get_lineup(preview_df, team1_raw)
-                    st.dataframe(lineup1, hide_index=True,
-                                 use_container_width=True)
+                    st.write("")
 
-                with col2:
-                    lineup2 = get_lineup(preview_df, team2_raw)
-                    st.dataframe(lineup2, hide_index=True,
-                                 use_container_width=True)
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        lineup1 = get_lineup(preview_df, team1_raw)
+                        st.dataframe(lineup1, hide_index=True,
+                                     use_container_width=True)
 
-    csv_files = [f for f in os.listdir(DATA) if f.endswith(".csv")]
-    dataframes = [pd.read_csv(os.path.join(DATA, f)) for f in csv_files]
+                    with col2:
+                        lineup2 = get_lineup(preview_df, team2_raw)
+                        st.dataframe(lineup2, hide_index=True,
+                                     use_container_width=True)
 
-    if dataframes:
-        df = pd.concat(dataframes, ignore_index=True)
+        st.sidebar.markdown("### Filter Stats by Game")
 
-        if 'game_date' in df.columns:
-            df['game_date'] = pd.to_datetime(df['game_date'])
-            min_date, max_date = df['game_date'].min(), df['game_date'].max()
-            date_range = st.sidebar.date_input(
-                "Filter by game date", [min_date, max_date])
+        game_options = ["All Games"] + preview_labels
 
-            if len(date_range) == 2:
-                df = df[(df['game_date'] >= pd.to_datetime(date_range[0])) &
-                        (df['game_date'] <= pd.to_datetime(date_range[1]))]
+        if "selected_game_stats" not in st.session_state:
+            st.session_state.selected_game_stats = "All Games"
+
+        selected_game_stats = st.sidebar.selectbox(
+            "Select game", game_options,
+            index=game_options.index(st.session_state.selected_game_stats),
+            key="game_filter_dropdown"
+        )
+
+        st.session_state.selected_game_stats = selected_game_stats
+
+        if selected_game_stats != "All Games":
+            selected_file = file_map[selected_game_stats]
+            df = pd.read_csv(os.path.join(DATA, selected_file))
+            df.columns = df.columns.str.strip()
+        else:
+            csv_files = [f for f in os.listdir(DATA) if f.endswith(".csv")]
+            dataframes = [pd.read_csv(os.path.join(DATA, f))
+                          for f in csv_files]
+            df = pd.concat(dataframes, ignore_index=True)
+
+        if st.session_state.selected_game_stats != "All Games":
+            selected_file = file_map[st.session_state.selected_game_stats]
+            df = pd.read_csv(os.path.join(DATA, selected_file))
+            df.columns = df.columns.str.strip()
+        else:
+            csv_files = [f for f in os.listdir(DATA) if f.endswith(".csv")]
+            dataframes = [pd.read_csv(os.path.join(DATA, f))
+                          for f in csv_files]
+            df = pd.concat(dataframes, ignore_index=True)
 
         st.sidebar.header("View Options")
         view = st.sidebar.selectbox(
             "Select view type", ["Hitter Summary", "Pitcher Summary"])
 
         if view == "Hitter Summary":
-            st.subheader("Hitter Summary")
-
+            st.header("Hitter Summary")
             hitters = [''] + sorted(df['Batter'].dropna().unique())
             selected_hitter = st.selectbox("Select a hitter", hitters)
 
@@ -292,54 +319,119 @@ if st.session_state.page == 'dashboard':
                     st.warning(
                         "No batted ball data available for this hitter against selected handedness.")
 
+                def draw_baseball_field(ax):
+                    theta = np.radians(np.linspace(-45, 45, 100))
+
+                    ax.plot([0, -500*np.sin(np.radians(45))], [0, 500 *
+                            np.cos(np.radians(45))], color='gray', linewidth=1)
+                    ax.plot([0, 500*np.sin(np.radians(45))], [0, 500 *
+                            np.cos(np.radians(45))], color='gray', linewidth=1)
+
+                    x = 405 * np.sin(theta)
+                    y = 405 * np.cos(theta)
+                    ax.plot(x, y, color='black')
+
+                    x_infield = 156 * np.sin(theta)
+                    y_infield = 156 * np.cos(theta)
+                    ax.plot(x_infield, y_infield, color='gray',
+                            linestyle='--', linewidth=1.5)
+
+                    ax.add_patch(plt.Circle((0, 60.5), 3, color='brown'))
+
+                    ax.set_xlim(-250, 250)
+                    ax.set_ylim(0, 500)
+                    ax.set_aspect('equal')
+                    ax.axis('off')
+
                 hits = hitter_df[hitter_df['PlayResult'].isin(
                     ['Single', 'Double', 'Triple', 'HomeRun'])]
                 hits = hits.dropna(
                     subset=['Distance', 'Bearing', 'AutoPitchType'])
+
                 hits['x'] = hits['Distance'] * \
                     np.sin(np.radians(hits['Bearing']))
                 hits['y'] = hits['Distance'] * \
                     np.cos(np.radians(hits['Bearing']))
-
-                fig, ax = plt.subplots(figsize=(6, 6))
-
-                for r in [100, 200, 300, 400, 500]:
-                    circle = plt.Circle(
-                        (0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
-                    ax.add_patch(circle)
-                    ax.text(0, r + 5, str(r), ha='center',
-                            va='bottom', fontsize=8, color='orange')
-
-                ax.set_xlim(-250, 250)
-                ax.set_ylim(0, 500)
-                ax.set_aspect('equal', adjustable='box')
-                ax.axis('off')
 
                 pitch_types = hits['AutoPitchType'].unique()
                 colors = plt.cm.get_cmap('tab10', len(pitch_types))
                 pitch_color_map = {ptype: colors(
                     i) for i, ptype in enumerate(pitch_types)}
 
-                for ptype in pitch_types:
-                    subset = hits[hits['AutoPitchType'] == ptype]
-                    ax.scatter(subset['x'], subset['y'], label=ptype,
-                               color=pitch_color_map[ptype], s=40, edgecolors='black')
-
-                ax.legend(title='Pitch Type', loc='upper left',
-                          fontsize='small', title_fontsize='medium')
                 left_col, _ = st.columns([1, 1.5])
                 with left_col:
-                    st.markdown("### Spray Chart (Pitch Type)")
+                    st.markdown("### Hits Spray Chart (Pitch Type)")
+                    fig, ax = plt.subplots(figsize=(6, 6))
+
+                    for r in [100, 200, 300, 400]:
+                        circle = plt.Circle(
+                            (0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
+                        ax.add_patch(circle)
+                        ax.text(0, r + 5, str(r), ha='center',
+                                va='bottom', fontsize=8, color='orange')
+
+                    draw_baseball_field(ax)
+
+                    for ptype in pitch_types:
+                        subset = hits[hits['AutoPitchType'] == ptype]
+                        ax.scatter(subset['x'], subset['y'], label=ptype,
+                                   color=pitch_color_map[ptype], s=40, edgecolors='black', zorder=5)
+
+                    ax.legend(title='Pitch Type', loc='upper left',
+                              fontsize='small', title_fontsize='medium')
                     st.pyplot(fig)
 
-        elif view == "Pitcher Summary":
-            st.subheader("Pitcher Summary coming soon!")
+    if view == "Pitcher Summary":
+        st.header("Pitcher Summary")
+
+        pitchers = df["Pitcher"].dropna().unique()
+        selected_pitcher = st.selectbox(
+            "Select a pitcher", [""] + sorted(pitchers))
+
+        if selected_pitcher:
+
+            df["PitchofPA"] = pd.to_numeric(df["PitchofPA"], errors="coerce")
+            pidf = df[df["Pitcher"] == selected_pitcher]
+
+            total_pitches = len(pidf)
+            batters_faced = pidf[pidf["PitchofPA"] == 1].shape[0]
+
+            strike_count = pidf[pidf["TaggedPitchType"].notna() & (pidf["PitchCall"].isin(
+                ["StrikeCalled", "StrikeSwinging", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable"]))]
+            strike_pct = len(strike_count) / \
+                total_pitches if total_pitches else 0
+
+            first_pitch_calls = pidf[pidf["PitchofPA"] == 1]["PitchCall"]
+            first_pitch_strike_pct = first_pitch_calls.isin(
+                ["StrikeCalled", "StrikeSwinging", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable"]).mean()
+
+            swings = pidf[pidf["PitchCall"].isin(
+                ["StrikeSwinging", "InPlay", "FoulBall"])]
+            whiffs = pidf[pidf["PitchCall"] == "StrikeSwinging"]
+            whiff_pct = len(whiffs) / len(swings) if len(swings) else 0
+
+            in_play = pidf[pidf["PitchCall"] == "InPlay"]
+            groundballs = in_play[in_play["TaggedHitType"] == "GroundBall"]
+            groundball_pct = len(groundballs) / \
+                len(in_play) if len(in_play) else 0
+
+            summary_df = pd.DataFrame({
+                "Batters Faced": [batters_faced],
+                "Total Pitches": [total_pitches],
+                "Strike %": [f"{strike_pct:.1%}"],
+                "1st Pitch Strike %": [f"{first_pitch_strike_pct:.1%}"],
+                "Whiff %": [f"{whiff_pct:.1%}"],
+                "Ground Ball %": [f"{groundball_pct:.1%}"]
+            })
+
+            summary_df = summary_df.reset_index(drop=True)
+            st.dataframe(summary_df, use_container_width=True, hide_index=True)
         else:
-            st.info("No data yet. Please upload a CSV to get started.")
+            st.info("Please select a pitcher to view stats.")
 
     st.markdown(
         "<div style='font-size: 0.8em; color: gray;'>"
-        "<b>Disclaimer:</b> The statistics displayed on this dashboard are based solely on TrackMan data collected from most, but not all Wild Things games this season. While the data is accurate, it may not exactly match official team or league stats. All metrics reflect only the games for which TrackMan data was available."
+        "<b>Disclaimer:</b> The statistics displayed on this dashboard are based solely on TrackMan data collected from most, but not all Wild Things games during the 2025 season. While the data is accurate, it may not exactly match official team or league stats. \n\n **Note:** Any data shown for players not on the Washington Wild Things reflects only their performance in games against the Wild Things."
         "</div>",
         unsafe_allow_html=True
     )
