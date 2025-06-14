@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import date
 
 st.set_page_config(
     page_title="Washington Wild Things Performance Dashboard", layout="wide")
@@ -120,6 +121,31 @@ dataframes = [pd.read_csv(os.path.join(DATA, f)) for f in csv_files]
 df_all = pd.concat(dataframes, ignore_index=True)
 df_all.columns = df_all.columns.str.strip()
 
+wins, losses = 0, 0
+for file in csv_files:
+    try:
+        game_df = pd.read_csv(os.path.join(DATA, file))
+        game_df.columns = game_df.columns.str.strip()
+
+        if {'PitcherTeam', 'BatterTeam', 'RunsScored'}.issubset(game_df.columns):
+            teams = game_df[['PitcherTeam', 'BatterTeam']].iloc[0]
+            team_raw = teams['PitcherTeam'] if teams['PitcherTeam'].startswith("WAS") else teams['BatterTeam']
+            opponent_raw = teams['BatterTeam'] if team_raw == teams['PitcherTeam'] else teams['PitcherTeam']
+
+            team_score = game_df[game_df['PitcherTeam'] == opponent_raw]['RunsScored'].sum()
+            opponent_score = game_df[game_df['PitcherTeam'] == team_raw]['RunsScored'].sum()
+
+            if team_score > opponent_score:
+                wins += 1
+            elif team_score < opponent_score:
+                losses += 1
+    except:
+        continue
+
+adjusted_wins = wins + 2
+adjusted_losses = losses + 1
+team_record = f"{adjusted_wins}-{adjusted_losses}"
+
 preview_entries = []
 for file in csv_files:
     try:
@@ -169,11 +195,24 @@ else:
     selected_player = None
 
 if position is None or selected_player == "":
-    st.markdown("## Please select a position and player from the sidebar to load data.")
+    st.markdown("# Please select a position and player from the sidebar to load data.")
     st.stop()
 
 if selected_player != "":
     selected_game = st.sidebar.selectbox("Filter by Game", ["All Games"] + preview_labels)
+    today = date.today().strftime("%B %d, %Y")
+
+    st.sidebar.markdown(
+        f"""
+        <hr style='margin-top: 20px; margin-bottom: 10px; border: 1px solid #ffffff22;'>
+
+        <div style='text-align: center; color: #dddddd; font-size: 0.9em;'>
+            <b>Wild Things record:</b> {team_record}<br>
+            <b>Date:</b> {today}
+        </div>
+        """,
+        unsafe_allow_html=True
+)
     if selected_game != "All Games":
         df = pd.read_csv(os.path.join(DATA, file_map[selected_game]))
     else:
@@ -270,26 +309,56 @@ if position == "Hitter":
         ax.legend(title='Pitch Type', loc='upper left', fontsize='small', title_fontsize='medium')
         st.pyplot(fig)
 
-elif position == "Pitcher":
-    st.header(f"Pitcher Summary: {selected_player}")
-    pitcher_df = df[df['Pitcher'] == selected_player]
-    pitcher_df["PitchofPA"] = pd.to_numeric(pitcher_df["PitchofPA"], errors="coerce")
+if position == "Pitcher":
+    selected_pitcher = selected_player
 
-    total_pitches = len(pitcher_df)
-    batters_faced = pitcher_df[pitcher_df["PitchofPA"] == 1].shape[0]
-    strikes = pitcher_df[pitcher_df["PitchCall"].isin(["StrikeCalled", "StrikeSwinging", "FoulBall"])]
-    whiffs = pitcher_df[pitcher_df["PitchCall"] == "StrikeSwinging"]
-    in_play = pitcher_df[pitcher_df["PitchCall"] == "InPlay"]
-    grounders = in_play[in_play["TaggedHitType"] == "GroundBall"]
+    if selected_pitcher:
+        st.header(f"Pitcher Summary: {selected_pitcher}")
 
-    summary = pd.DataFrame({
-        "Batters Faced": [batters_faced],
-        "Total Pitches": [total_pitches],
-        "Strike %": [f"{len(strikes)/total_pitches:.1%}" if total_pitches else "N/A"],
-        "Whiff %": [f"{len(whiffs)/len(pitcher_df[pitcher_df['PitchCall'].isin(['StrikeSwinging','InPlay','FoulBall'])]) if len(pitcher_df) else 0:.1%}"],
-        "Ground Ball %": [f"{len(grounders)/len(in_play) if len(in_play) else 0:.1%}"]
-    })
-    st.dataframe(summary, hide_index=True, use_container_width=True)
+        df["PitchofPA"] = pd.to_numeric(df["PitchofPA"], errors="coerce")
+        pidf = df[df["Pitcher"] == selected_pitcher].copy()
+
+        batters_faced = pidf[pidf["PitchofPA"] == 1].shape[0]
+        total_pitches = len(pidf)
+
+        first_pitch_calls = pidf[pidf["PitchofPA"] == 1]["PitchCall"]
+        total_pas = len(first_pitch_calls)
+        first_pitch_strikes = first_pitch_calls.isin([
+            "StrikeCalled", "StrikeSwinging", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable"
+        ]).sum()
+        first_pitch_strike_pct = first_pitch_strikes / total_pas if total_pas else 0
+
+        strike_count = pidf[pidf["TaggedPitchType"].notna() & (
+            pidf["PitchCall"].isin(["StrikeCalled", "StrikeSwinging", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable"])
+        )]
+        strike_pct = len(strike_count) / total_pitches if total_pitches else 0
+
+        swings = pidf[pidf["PitchCall"].isin(["StrikeSwinging", "InPlay", "FoulBall"])]
+        whiffs = pidf[pidf["PitchCall"] == "StrikeSwinging"]
+        whiff_pct = len(whiffs) / len(swings) if len(swings) else 0
+
+        fastball_keywords = ["Fastball", "FourSeamFastball", "FourSeamFastBall", "Four Seam", "Four-Seam", "4-Seam", "4 Seam", "FourSeam", "FourSeamer"]
+        fastballs = pidf[pidf["TaggedPitchType"].isin(fastball_keywords)]
+        avg_velo = fastballs["RelSpeed"].mean() if not fastballs.empty else 0
+
+        in_play = pidf[pidf["PitchCall"] == "InPlay"]
+        groundballs = in_play[in_play["PlayResult"].str.contains("Ground", case=False, na=False)]
+        groundball_pct = len(groundballs) / len(in_play) if len(in_play) else 0
+
+        summary_df = pd.DataFrame({
+            "Batters Faced": [batters_faced],
+            "Total Pitches": [total_pitches],
+            "Strike %": [f"{strike_pct:.1%}"],
+            "1st Pitch Strike %": [f"{first_pitch_strike_pct:.1%}"],
+            "Whiff %": [f"{whiff_pct:.1%}"],
+            "Avg FB Velo (mph)": [f"{avg_velo:.1f}"],
+            "Ground Ball %": [f"{groundball_pct:.1%}"]
+        })
+
+        st.dataframe(summary_df, use_container_width=True, hide_index=True)
+
+    else:
+        st.info("Please select a pitcher to view stats.")
 
 st.markdown(
     """
