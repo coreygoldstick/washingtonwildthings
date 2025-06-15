@@ -720,10 +720,6 @@ if position == "Pitcher":
             ax_hits_result.legend(title='Hit Type', loc='upper left', fontsize='small', title_fontsize='medium')
             st.pyplot(fig_hits_result)
 
-
-
-
-
             st.markdown("### Pitch Mix by Count")
 
             count_df = pidf.dropna(subset=["Balls", "Strikes", "PitchTypeUsed"]).copy()
@@ -763,7 +759,7 @@ if position == "Pitcher":
                 ("0-2", "1-2"),
                 ("2-1", "3-1"), ("2-1", "2-2"),
                 ("1-2", "2-2"),
-                ("2-2", "3-2")
+                ("2-2", "3-2"),
             ]
 
             G.add_edges_from(edges)
@@ -804,12 +800,6 @@ if position == "Pitcher":
             ax.legend(title="Pitch Type", loc="lower left", fontsize=8, title_fontsize=9)
 
             st.pyplot(fig)
-
-
-
-
-
-
 
         with right_col:
             st.markdown("### Pitch Locations by Pitch Type")
