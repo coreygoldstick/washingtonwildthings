@@ -12,10 +12,13 @@ import networkx as nx
 st.set_page_config(
     page_title="Washington Wild Things Performance Dashboard", layout="wide")
 
+
 def draw_baseball_field(ax):
     theta = np.radians(np.linspace(-45, 45, 100))
-    ax.plot([0, -500*np.sin(np.radians(45))], [0, 500*np.cos(np.radians(45))], color='gray', linewidth=1)
-    ax.plot([0, 500*np.sin(np.radians(45))],[0, 500*np.cos(np.radians(45))], color='gray', linewidth=1)
+    ax.plot([0, -500*np.sin(np.radians(45))],
+            [0, 500*np.cos(np.radians(45))], color='gray', linewidth=1)
+    ax.plot([0, 500*np.sin(np.radians(45))],
+            [0, 500*np.cos(np.radians(45))], color='gray', linewidth=1)
     x = 405 * np.sin(theta)
     y = 405 * np.cos(theta)
     ax.plot(x, y, color='black')
@@ -23,7 +26,8 @@ def draw_baseball_field(ax):
     y_infield = 156 * np.cos(theta)
     ax.plot(x_infield, y_infield, color='gray', linestyle='--', linewidth=1.5)
     ax.add_patch(plt.Circle((0, 60.5), 3, color='brown'))
-    ax.add_patch(plt.Circle((0, 60.5), 13, fill=False, edgecolor='gray', linewidth=2, zorder=6))
+    ax.add_patch(plt.Circle((0, 60.5), 13, fill=False,
+                 edgecolor='gray', linewidth=2, zorder=6))
     ax.set_xlim(-300, 300)
     ax.set_ylim(0, 500)
     ax.set_aspect('equal')
@@ -32,7 +36,8 @@ def draw_baseball_field(ax):
 
 def render_left_aligned_table(df, title=None):
     html = ""
-    if title: html += f"<h4 style='text-align:left; margin-bottom: 0.5em; color: var(--text-color);'>{title}</h4>"
+    if title:
+        html += f"<h4 style='text-align:left; margin-bottom: 0.5em; color: var(--text-color);'>{title}</h4>"
     html += "<table style='width:100%; border-collapse: collapse;'>"
     html += "<thead><tr>"
     for col in df.columns:
@@ -48,6 +53,7 @@ def render_left_aligned_table(df, title=None):
         html += "</tr>"
     html += "</tbody></table>"
     st.markdown(html, unsafe_allow_html=True)
+
 
 st.markdown("""
     <style>
@@ -189,22 +195,28 @@ pitch_color_map = {
     'Changeup': '#e377c2',
     'Sinker': '#9467bd',
     'Splitter': '#8c564b',
-    'Cutter': '#d62728',}
+    'Cutter': '#d62728', }
 
 csv_files = [f for f in os.listdir(DATA) if f.endswith(".csv")]
 dataframes = [pd.read_csv(os.path.join(DATA, f)) for f in csv_files]
 df_all = pd.concat(dataframes, ignore_index=True)
 df_all.columns = df_all.columns.str.strip()
 
-wild_things_batter_names = df_all[df_all['BatterTeam'] == 'WAS_WIL3']['Batter'].dropna().unique()
+wild_things_batter_names = df_all[df_all['BatterTeam']
+                                  == 'WAS_WIL3']['Batter'].dropna().unique()
 wild_things_batter_names = sorted(set(wild_things_batter_names))
-batter_display = [f"{name.split(',')[1].strip()} {name.split(',')[0].strip()}" if ',' in name else name for name in wild_things_batter_names]
-batter_map = {display: original for display, original in zip(batter_display, wild_things_batter_names)}
+batter_display = [
+    f"{name.split(',')[1].strip()} {name.split(',')[0].strip()}" if ',' in name else name for name in wild_things_batter_names]
+batter_map = {display: original for display, original in zip(
+    batter_display, wild_things_batter_names)}
 
-wild_things_pitcher_names = df_all[df_all['PitcherTeam'] == 'WAS_WIL3']['Pitcher'].dropna().unique()
+wild_things_pitcher_names = df_all[df_all['PitcherTeam']
+                                   == 'WAS_WIL3']['Pitcher'].dropna().unique()
 wild_things_pitcher_names = sorted(set(wild_things_pitcher_names))
-pitcher_display = [f"{name.split(',')[1].strip()} {name.split(',')[0].strip()}" if ',' in name else name for name in wild_things_pitcher_names]
-pitcher_map = {display: original for display, original in zip(pitcher_display, wild_things_pitcher_names)}
+pitcher_display = [
+    f"{name.split(',')[1].strip()} {name.split(',')[0].strip()}" if ',' in name else name for name in wild_things_pitcher_names]
+pitcher_map = {display: original for display, original in zip(
+    pitcher_display, wild_things_pitcher_names)}
 
 wins, losses = 0, 0
 for file in csv_files:
@@ -214,11 +226,14 @@ for file in csv_files:
 
         if {'PitcherTeam', 'BatterTeam', 'RunsScored'}.issubset(game_df.columns):
             teams = game_df[['PitcherTeam', 'BatterTeam']].iloc[0]
-            team_raw = teams['PitcherTeam'] if teams['PitcherTeam'].startswith("WAS") else teams['BatterTeam']
+            team_raw = teams['PitcherTeam'] if teams['PitcherTeam'].startswith(
+                "WAS") else teams['BatterTeam']
             opponent_raw = teams['BatterTeam'] if team_raw == teams['PitcherTeam'] else teams['PitcherTeam']
 
-            team_score = game_df[game_df['PitcherTeam'] == opponent_raw]['RunsScored'].sum()
-            opponent_score = game_df[game_df['PitcherTeam'] == team_raw]['RunsScored'].sum()
+            team_score = game_df[game_df['PitcherTeam']
+                                 == opponent_raw]['RunsScored'].sum()
+            opponent_score = game_df[game_df['PitcherTeam']
+                                     == team_raw]['RunsScored'].sum()
 
             if team_score > opponent_score:
                 wins += 1
@@ -249,8 +264,10 @@ for file in csv_files:
         team1 = team_name_lookup.get(row['PitcherTeam'], row['PitcherTeam'])
         team2 = team_name_lookup.get(row['BatterTeam'], row['BatterTeam'])
 
-        game_date = pd.to_datetime(row.get('Date', file.split(".csv")[0]), errors='coerce')
-        date_str = game_date.strftime('%B %d, %Y') if not pd.isnull(game_date) else "Unknown Date"
+        game_date = pd.to_datetime(
+            row.get('Date', file.split(".csv")[0]), errors='coerce')
+        date_str = game_date.strftime('%B %d, %Y') if not pd.isnull(
+            game_date) else "Unknown Date"
 
         try:
             game_time = pd.to_datetime(str(row['Time'])).strftime('%I:%M %p')
@@ -277,11 +294,13 @@ display_name = ""
 
 if position == "Hitter":
     display_options = [""] + batter_display
-    display_name = st.sidebar.selectbox("Select a Hitter", display_options, key="hitter_select")
+    display_name = st.sidebar.selectbox(
+        "Select a Hitter", display_options, key="hitter_select")
     selected_player = batter_map.get(display_name, "")
 elif position == "Pitcher":
     display_options = [""] + pitcher_display
-    display_name = st.sidebar.selectbox("Select a Pitcher", display_options, key="pitcher_select")
+    display_name = st.sidebar.selectbox(
+        "Select a Pitcher", display_options, key="pitcher_select")
     selected_player = pitcher_map.get(display_name, "")
 else:
     selected_player = None
@@ -291,7 +310,8 @@ if position is None or selected_player == "":
     st.stop()
 
 if selected_player != "":
-    selected_game = st.sidebar.selectbox("Filter by Game", ["All Games"] + preview_labels)
+    selected_game = st.sidebar.selectbox(
+        "Filter by Game", ["All Games"] + preview_labels)
     today = date.today().strftime("%B %d, %Y")
 
     st.sidebar.markdown(
@@ -313,7 +333,8 @@ else:
     df = df_all.copy()
 
 if 'TaggedPitchType' in df.columns:
-    df['PitchTypeUsed'] = df['TaggedPitchType'].where(df['TaggedPitchType'].str.lower() != 'undefined', df['AutoPitchType'])
+    df['PitchTypeUsed'] = df['TaggedPitchType'].where(
+        df['TaggedPitchType'].str.lower() != 'undefined', df['AutoPitchType'])
 else:
     df['PitchTypeUsed'] = df['AutoPitchType']
 
@@ -323,7 +344,8 @@ if position == "Hitter":
     hitter_df = df[df['Batter'] == selected_player]
 
     if hitter_df.empty:
-        st.markdown(f"<h2>Hitter Summary: {display_name}</h2>", unsafe_allow_html=True)
+        st.markdown(
+            f"<h2>Hitter Summary: {display_name}</h2>", unsafe_allow_html=True)
         st.warning("No data available for this hitter in the selected game.")
         st.stop()
 
@@ -338,52 +360,111 @@ if position == "Hitter":
         f"<h2>Hitter Summary: {display_name} <span style='color:gray;'>{bats_label}</span></h2>", unsafe_allow_html=True)
 
     if 'PitcherThrows' in df.columns:
-        handedness = st.radio("Filter by Pitcher Handedness", ['All', 'Right', 'Left'])
+        handedness = st.radio("Filter by Pitcher Handedness", [
+                              'All', 'Right', 'Left'])
         if handedness != 'All':
             hitter_df = hitter_df[hitter_df['PitcherThrows'] == handedness]
 
-    batted = hitter_df[hitter_df['PlayResult'].isin(['Single', 'Double', 'Triple', 'HomeRun', 'Out'])]
+    batted = hitter_df[hitter_df['PlayResult'].isin(
+        ['Single', 'Double', 'Triple', 'HomeRun', 'Out'])]
     if batted.empty:
         st.warning("No batted ball events available for this hitter.")
         st.stop()
 
-    pitches_seen = hitter_df.groupby('PitchTypeUsed').size().reset_index(name='Pitches Seen')
+    pitches_seen = hitter_df.groupby(
+        'PitchTypeUsed').size().reset_index(name='Pitches Seen')
 
-    official_abs = hitter_df[~hitter_df['PlayResult'].isin(['Undefined', 'Error', 'Sacrifice'])]
-    total_abs = len(official_abs)
-    total_hits = official_abs['PlayResult'].isin(['Single', 'Double', 'Triple', 'HomeRun']).sum()
+# New AB logic: TaggedHitType is not Undefined OR KorBB is Strikeout
+    ab_df = hitter_df[
+        (hitter_df['TaggedHitType'].str.lower() != 'undefined') |
+        (hitter_df['KorBB'] == 'Strikeout')
+    ]
+
+    ab_hits = ab_df[ab_df['PlayResult'].isin(
+        ['Single', 'Double', 'Triple', 'HomeRun'])]
+    ab_counts = ab_df.groupby('PitchTypeUsed').size().rename('ABs')
+    hit_counts = ab_hits.groupby('PitchTypeUsed').size().rename('Hits')
+
+    ba_by_pitch = pd.concat([ab_counts, hit_counts], axis=1).fillna(0)
+    ba_by_pitch['Batting Average'] = (
+        ba_by_pitch['Hits'] / ba_by_pitch['ABs']).round(3)
+    ba_by_pitch = ba_by_pitch['Batting Average'].reset_index()
+
+    # Count ABs
+    total_abs = len(ab_df)
+
+    # Count Hits from valid ABs
+    total_hits = ab_df['PlayResult'].isin(
+        ['Single', 'Double', 'Triple', 'HomeRun']).sum()
+
+    # Batting average
     regular_avg = round(total_hits / total_abs, 3) if total_abs > 0 else 0
 
     pitch_stats = batted.groupby('PitchTypeUsed').agg(
         BIP=('PlayResult', 'count'),
-        Hits=('PlayResult', lambda x: x.isin(['Single', 'Double', 'Triple', 'HomeRun']).sum()),
+        Hits=('PlayResult', lambda x: x.isin(
+            ['Single', 'Double', 'Triple', 'HomeRun']).sum()),
         AvgEV=('ExitSpeed', 'mean'),
         AvgLA=('Angle', 'mean')
     ).reset_index()
 
-    pitch_stats = pd.merge(pitch_stats, pitches_seen, on='PitchTypeUsed', how='left')
+    swings_df = hitter_df[hitter_df["PitchCall"].isin(
+        ["StrikeSwinging", "InPlay", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable"])]
+    whiffs_df = hitter_df[hitter_df["PitchCall"] == "StrikeSwinging"]
 
+    swings_count = swings_df.groupby("PitchTypeUsed").size().rename("Swings")
+    whiffs_count = whiffs_df.groupby("PitchTypeUsed").size().rename("Whiffs")
+
+    pitch_stats = pd.merge(pitch_stats, pitches_seen,
+                           on='PitchTypeUsed', how='left')
+    pitch_stats = pitch_stats.merge(swings_count, on='PitchTypeUsed', how='left').merge(
+        whiffs_count, on='PitchTypeUsed', how='left')
+    pitch_stats['Whiff %'] = round(
+        pitch_stats['Whiffs'] / pitch_stats['Swings'], 3)
+    pitch_stats['Whiff %'] = pitch_stats['Whiff %'].fillna(0)
     pitch_stats['AVG'] = round(pitch_stats['Hits'] / pitch_stats['BIP'], 3)
+
+    swings = hitter_df[hitter_df['PitchCall'].isin(
+        ["StrikeSwinging", "InPlay", "FoulBall", "FoulBallFieldable, FoulBallNotFieldable"])]
+    whiffs = hitter_df[hitter_df['PitchCall'] == "StrikeSwinging"]
+    whiff_pct = len(whiffs) / len(swings) if len(swings) else 0
+
+    pitch_stats['BABIP'] = (pitch_stats['Hits'] / pitch_stats['BIP']).round(3)
 
     display_df = pitch_stats.rename(columns={
         "PitchTypeUsed": "Pitch Type",
+        "Pitches Seen": "Pitches Seen",
         "BIP": "Balls Hit Into Play",
         "Hits": "Hits",
         "AvgEV": "Avg Exit Velo (mph)",
         "AvgLA": "Avg Launch Angle (°)",
-        "AVG": "Batting Average on Balls in Play"})
+        "Whiff %": "Whiff %",
+        "BABIP": "BABIP",
+        "Batting Average": "Batting Average"
+    })
 
-    display_df["Avg Exit Velo (mph)"] = display_df["Avg Exit Velo (mph)"].round(2)
-    display_df["Avg Launch Angle (°)"] = display_df["Avg Launch Angle (°)"].round(2)
+    display_df["Batting Average"] = round(
+        display_df["Hits"] / display_df["Pitches Seen"], 3)
+    display_df["Avg Exit Velo (mph)"] = display_df["Avg Exit Velo (mph)"].round(
+        2)
+    display_df["Avg Launch Angle (°)"] = display_df["Avg Launch Angle (°)"].round(
+        2)
+    display_df["Whiff %"] = display_df["Whiff %"].apply(
+        lambda x: f"{x * 100:.1f}%")
+    pitch_stats = pitch_stats.merge(
+        ba_by_pitch, on='PitchTypeUsed', how='left')
 
     display_df = display_df[[
         "Pitch Type",
         "Pitches Seen",
         "Balls Hit Into Play",
         "Hits",
+        "BABIP",
+        "Batting Average",
         "Avg Exit Velo (mph)",
         "Avg Launch Angle (°)",
-        "Batting Average on Balls in Play"]]
+        "Whiff %",
+    ]]
 
     totals = {
         "Pitch Type": "<b>Total</b>",
@@ -392,14 +473,28 @@ if position == "Hitter":
         "Hits": display_df["Hits"].sum(),
         "Avg Exit Velo (mph)": display_df["Avg Exit Velo (mph)"].mean().round(2),
         "Avg Launch Angle (°)": display_df["Avg Launch Angle (°)"].mean().round(2),
-        "Batting Average on Balls in Play": round(
-            display_df["Hits"].sum() / display_df["Balls Hit Into Play"].sum(), 3)}
+        "BABIP": round(display_df["Hits"].sum() / display_df["Balls Hit Into Play"].sum(), 3),
+        "Whiff %": f"{round(display_df['Whiff %'].str.rstrip('%').astype(float).mean(), 1)}%",
+        "Batting Average": f"{regular_avg:.3f}"}
 
-    display_df = pd.concat([display_df, pd.DataFrame([totals])], ignore_index=True)
+    display_df = pd.concat(
+        [display_df, pd.DataFrame([totals])], ignore_index=True)
 
     render_left_aligned_table(display_df, title="Batted Ball Performance")
 
-    hits = hitter_df[hitter_df['PlayResult'].isin(['Single', 'Double', 'Triple', 'HomeRun'])]
+    avg_by_outs = (ab_df.groupby("Outs")
+                   .apply(lambda x: x["PlayResult"].isin(["Single", "Double", "Triple", "HomeRun"]).sum() / len(x))
+                   .round(3)
+                   .reset_index(name="AVG")
+                   )
+
+    avg_by_outs["Outs"] = avg_by_outs["Outs"].astype(int).astype(str)
+
+    st.markdown("### Batting Average by Outs")
+    render_left_aligned_table(avg_by_outs)
+
+    hits = hitter_df[hitter_df['PlayResult'].isin(
+        ['Single', 'Double', 'Triple', 'HomeRun'])]
     hits = hits.dropna(subset=['Distance', 'Bearing', 'PitchTypeUsed'])
     hits['x'] = hits['Distance'] * np.sin(np.radians(hits['Bearing']))
     hits['y'] = hits['Distance'] * np.cos(np.radians(hits['Bearing']))
@@ -413,18 +508,22 @@ if position == "Hitter":
         fig, ax = plt.subplots(figsize=(6, 6))
 
         for r in [100, 200, 300, 400]:
-            circle = plt.Circle((0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
+            circle = plt.Circle(
+                (0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
             ax.add_patch(circle)
-            ax.text(0, r + 5, str(r), ha='center', va='bottom', fontsize=8, color='orange')
+            ax.text(0, r + 5, str(r), ha='center',
+                    va='bottom', fontsize=8, color='orange')
 
         draw_baseball_field(ax)
 
         for ptype in pitch_types:
             subset = hits[hits['PitchTypeUsed'] == ptype]
             color = pitch_color_map.get(ptype, 'gray')
-            ax.scatter(subset['x'], subset['y'], label=ptype, color=color, s=40, edgecolors='black', zorder=5)
+            ax.scatter(subset['x'], subset['y'], label=ptype,
+                       color=color, s=40, edgecolors='black', zorder=5)
 
-        ax.legend(title='Pitch Type', loc='upper left', fontsize='small', title_fontsize='medium')
+        ax.legend(title='Pitch Type', loc='upper left',
+                  fontsize='small', title_fontsize='medium')
         st.pyplot(fig)
 
     with col2:
@@ -432,9 +531,11 @@ if position == "Hitter":
         fig2, ax2 = plt.subplots(figsize=(6, 6))
 
         for r in [100, 200, 300, 400]:
-            ring = plt.Circle((0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
+            ring = plt.Circle((0, 0), r, color='orange',
+                              linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
             ax2.add_patch(ring)
-            ax2.text(0, r + 5, str(r), ha='center', va='bottom', fontsize=8, color='orange')
+            ax2.text(0, r + 5, str(r), ha='center',
+                     va='bottom', fontsize=8, color='orange')
 
         draw_baseball_field(ax2)
 
@@ -446,10 +547,72 @@ if position == "Hitter":
 
         for result in ['Single', 'Double', 'Triple', 'HomeRun']:
             subset = hits[hits['PlayResult'] == result]
-            ax2.scatter(subset['x'], subset['y'], label=result, color=hit_color_map[result], s=40, edgecolors='black', zorder=5)
+            ax2.scatter(subset['x'], subset['y'], label=result,
+                        color=hit_color_map[result], s=40, edgecolors='black', zorder=5)
 
-        ax2.legend(title='Hit Result', loc='upper left', fontsize='small', title_fontsize='medium')
+        ax2.legend(title='Hit Result', loc='upper left',
+                   fontsize='small', title_fontsize='medium')
         st.pyplot(fig2)
+
+        strike_zone = {
+            'left': -0.85,
+            'right': 0.85,
+            'bottom': 1.5,
+            'top': 3.5
+        }
+
+        outside_zone = hitter_df[
+            (hitter_df['PlateLocSide'] < strike_zone['left']) |
+            (hitter_df['PlateLocSide'] > strike_zone['right']) |
+            (hitter_df['PlateLocHeight'] < strike_zone['bottom']) |
+            (hitter_df['PlateLocHeight'] > strike_zone['top'])
+        ]
+
+        swings = ["StrikeSwinging", "FoulBall", "InPlay",
+                  "FoulBallFieldable", "FoulBallNotFieldable"]
+        chases = outside_zone[outside_zone["PitchCall"].isin(swings)]
+
+        chase_pct = len(chases) / \
+            len(outside_zone) if len(outside_zone) > 0 else 0
+
+        st.markdown("### Chases by Pitch Type")
+        st.markdown(
+            f"<b>Chase Percentage:</b> {chase_pct:.1%}", unsafe_allow_html=True)
+        chase_df = hitter_df[hitter_df['PitchCall'].isin(["StrikeSwinging", "InPlay", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable"])].dropna(
+            subset=["PlateLocSide", "PlateLocHeight", "PitchTypeUsed"])
+
+        outside_zone = chase_df[
+            (chase_df["PlateLocSide"].abs() > 0.85) |
+            (chase_df["PlateLocHeight"] < 1.5) |
+            (chase_df["PlateLocHeight"] > 3.5)]
+
+        fig_chase, ax_chase = plt.subplots(figsize=(6, 6))
+        unique_ptypes = sorted(outside_zone["PitchTypeUsed"].dropna().unique())
+        colors = plt.cm.get_cmap('tab10', len(unique_ptypes))
+        ptype_color_map = {ptype: colors(i)
+                           for i, ptype in enumerate(unique_ptypes)}
+
+        for ptype in unique_ptypes:
+            subset = outside_zone[outside_zone["PitchTypeUsed"] == ptype]
+            ax_chase.scatter(
+                subset["PlateLocSide"], subset["PlateLocHeight"],
+                label=ptype,
+                color=ptype_color_map[ptype],
+                edgecolors='black', s=60)
+
+        strike_zone = Rectangle((-0.85, 1.5), 1.7, 2.0, linewidth=2,
+                                edgecolor='black', facecolor='none')
+        ax_chase.add_patch(strike_zone)
+
+        ax_chase.set_title(
+            "Swings Outside the Strike Zone by Pitch Type (Hitter's view)")
+        ax_chase.set_xlabel("Horizontal Location (ft)")
+        ax_chase.set_ylabel("Vertical Location (ft)")
+        ax_chase.set_xlim(2, -2)
+        ax_chase.set_ylim(0, 5)
+        ax_chase.legend(title="Pitch Type", fontsize='small',
+                        title_fontsize='medium')
+        st.pyplot(fig_chase)
 
 if position == "Pitcher":
     selected_pitcher = selected_player
@@ -468,14 +631,17 @@ if position == "Pitcher":
         else:
             throws_label = ""
 
-        batter_handedness = st.session_state.get("pitcher_batter_handedness", "All")
+        batter_handedness = st.session_state.get(
+            "pitcher_batter_handedness", "All")
 
         batter_filter_label = ""
-        st.markdown(f"<h2>Pitcher Summary: {display_name} <span style='color:gray;'>{throws_label}{batter_filter_label}</span></h2>", unsafe_allow_html=True)
+        st.markdown(
+            f"<h2>Pitcher Summary: {display_name} <span style='color:gray;'>{throws_label}{batter_filter_label}</span></h2>", unsafe_allow_html=True)
 
         pidf = pidf_all.copy()
         df["PitchofPA"] = pd.to_numeric(df["PitchofPA"], errors="coerce")
-        hits = pidf["PlayResult"].isin(["Single", "Double", "Triple", "HomeRun"]).sum()
+        hits = pidf["PlayResult"].isin(
+            ["Single", "Double", "Triple", "HomeRun"]).sum()
         runs = pidf["RunsScored"].sum()
         walks = pidf["KorBB"].eq("Walk").sum()
         strikeouts = pidf["KorBB"].eq("Strikeout").sum()
@@ -485,7 +651,8 @@ if position == "Pitcher":
 
         outs_on_play = pidf["OutsOnPlay"].sum()
 
-        strikeout_outs = pidf[(pidf["OutsOnPlay"] == 0) & (pidf["KorBB"] == "Strikeout")].shape[0]
+        strikeout_outs = pidf[(pidf["OutsOnPlay"] == 0) & (
+            pidf["KorBB"] == "Strikeout")].shape[0]
 
         total_outs = outs_on_play + strikeout_outs
 
@@ -501,7 +668,8 @@ if position == "Pitcher":
         render_left_aligned_table(results_df)
 
         hand_filter_placeholder = st.empty()
-        batter_handedness = hand_filter_placeholder.radio("Filter by Batter Handedness", ['All', 'Right', 'Left'], horizontal=True, key="pitcher_batter_handedness")
+        batter_handedness = hand_filter_placeholder.radio("Filter by Batter Handedness", [
+                                                          'All', 'Right', 'Left'], horizontal=True, key="pitcher_batter_handedness")
 
         if batter_handedness != 'All':
             pidf = pidf_all[pidf_all["BatterSide"] == batter_handedness].copy()
@@ -509,7 +677,8 @@ if position == "Pitcher":
             pidf = pidf_all.copy()
 
         df["PitchofPA"] = pd.to_numeric(df["PitchofPA"], errors="coerce")
-        hits = pidf["PlayResult"].isin(["Single", "Double", "Triple", "HomeRun"]).sum()
+        hits = pidf["PlayResult"].isin(
+            ["Single", "Double", "Triple", "HomeRun"]).sum()
         runs = pidf["RunsScored"].sum()
         walks = pidf["KorBB"].eq("Walk").sum()
         strikeouts = pidf["KorBB"].eq("Strikeout").sum()
@@ -519,7 +688,8 @@ if position == "Pitcher":
 
         outs_on_play = pidf["OutsOnPlay"].sum()
 
-        strikeout_outs = pidf[(pidf["OutsOnPlay"] == 0) & (pidf["KorBB"] == "Strikeout")].shape[0]
+        strikeout_outs = pidf[(pidf["OutsOnPlay"] == 0) & (
+            pidf["KorBB"] == "Strikeout")].shape[0]
 
         total_outs = outs_on_play + strikeout_outs
 
@@ -544,7 +714,8 @@ if position == "Pitcher":
             Count=("PitchTypeUsed", "count"),
             Velocity=("RelSpeed", lambda x: f"{x.mean():.2f} mph"),
             SpinRate=("SpinRate", lambda x: f"{x.mean():.0f} rpm"),
-            VerticalBreak=("InducedVertBreak", lambda x: f"{x.mean():.2f} in."),
+            VerticalBreak=("InducedVertBreak",
+                           lambda x: f"{x.mean():.2f} in."),
             HorizontalBreak=("HorzBreak", lambda x: f"{x.mean():.2f} in.")
         ).reset_index().rename(columns={
             "PitchTypeUsed": "Pitch Type",
@@ -560,18 +731,22 @@ if position == "Pitcher":
 
         first_pitch_calls = pidf[pidf["PitchofPA"] == 1]["PitchCall"]
         total_pas = len(first_pitch_calls)
-        first_pitch_strikes = first_pitch_calls.isin(["StrikeCalled", "StrikeSwinging", "FoulBall", "InPlay", "FoulBallFieldable", "FoulBallNotFieldable"]).sum()
+        first_pitch_strikes = first_pitch_calls.isin(
+            ["StrikeCalled", "StrikeSwinging", "FoulBall", "InPlay", "FoulBallFieldable", "FoulBallNotFieldable"]).sum()
         first_pitch_strike_pct = first_pitch_strikes / total_pas if total_pas else 0
 
-        strike_count = pidf[pidf["PitchCall"].isin(["StrikeCalled", "StrikeSwinging", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable", "InPlay"])]
+        strike_count = pidf[pidf["PitchCall"].isin(
+            ["StrikeCalled", "StrikeSwinging", "FoulBall", "FoulBallFieldable", "FoulBallNotFieldable", "InPlay"])]
         strike_pct = len(strike_count) / total_pitches if total_pitches else 0
 
-        swings = pidf[pidf["PitchCall"].isin(["StrikeSwinging", "InPlay", "FoulBall"])]
+        swings = pidf[pidf["PitchCall"].isin(
+            ["StrikeSwinging", "InPlay", "FoulBall"])]
         whiffs = pidf[pidf["PitchCall"] == "StrikeSwinging"]
         whiff_pct = len(whiffs) / len(swings) if len(swings) else 0
 
         in_play = pidf[pidf["PitchCall"] == "InPlay"]
-        groundballs = in_play[in_play["TaggedHitType"].str.contains("Ground", case=False, na=False)]
+        groundballs = in_play[in_play["TaggedHitType"].str.contains(
+            "Ground", case=False, na=False)]
         groundball_pct = len(groundballs) / len(in_play) if len(in_play) else 0
 
         summary_df = pd.DataFrame({
@@ -599,15 +774,18 @@ if position == "Pitcher":
         with left_col:
             st.markdown("### Pitch Locations Heatmap")
             reds = plt.cm.get_cmap('Reds')
-            darker_reds = LinearSegmentedColormap.from_list("darker_reds", reds(np.linspace(0.3, 1.0, 256)))
+            darker_reds = LinearSegmentedColormap.from_list(
+                "darker_reds", reds(np.linspace(0.3, 1.0, 256)))
             fig1, ax1 = plt.subplots(figsize=(6, 6))
-            hb = ax1.hexbin(strike_zone_df["PlateLocSide"], strike_zone_df["PlateLocHeight"], gridsize=30, cmap=darker_reds, bins='log')
+            hb = ax1.hexbin(
+                strike_zone_df["PlateLocSide"], strike_zone_df["PlateLocHeight"], gridsize=30, cmap=darker_reds, bins='log')
             ax1.set_title("All Pitch Locations (Pitcher's View)")
             ax1.set_xlabel("Horizontal Location (ft)")
             ax1.set_ylabel("Vertical Location (ft)")
             ax1.set_xlim(-2, 2)
             ax1.set_ylim(0, 5)
-            strike_zone = Rectangle((-0.85, 1.5), 1.7, 2.0, linewidth=2, edgecolor='black', facecolor='none')
+            strike_zone = Rectangle(
+                (-0.85, 1.5), 1.7, 2.0, linewidth=2, edgecolor='black', facecolor='none')
             ax1.add_patch(strike_zone)
             st.pyplot(fig1)
 
@@ -615,13 +793,16 @@ if position == "Pitcher":
             fig_hits_pitch, ax_hits_pitch = plt.subplots(figsize=(6, 6))
 
             for r in [100, 200, 300, 400]:
-                circle = plt.Circle((0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
+                circle = plt.Circle(
+                    (0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
                 ax_hits_pitch.add_patch(circle)
-                ax_hits_pitch.text(0, r + 5, str(r), ha='center', va='bottom', fontsize=8, color='orange')
+                ax_hits_pitch.text(0, r + 5, str(r), ha='center',
+                                   va='bottom', fontsize=8, color='orange')
 
             draw_baseball_field(ax_hits_pitch)
 
-            hits = pidf[pidf['PlayResult'].isin(['Single', 'Double', 'Triple', 'HomeRun'])].copy()
+            hits = pidf[pidf['PlayResult'].isin(
+                ['Single', 'Double', 'Triple', 'HomeRun'])].copy()
             hits = hits.dropna(subset=['Distance', 'Bearing', 'PitchTypeUsed'])
             hits['x'] = hits['Distance'] * np.sin(np.radians(hits['Bearing']))
             hits['y'] = hits['Distance'] * np.cos(np.radians(hits['Bearing']))
@@ -634,26 +815,32 @@ if position == "Pitcher":
 
             for result in ['Single', 'Double', 'Triple', 'HomeRun']:
                 subset = hits[hits['PlayResult'] == result]
-                ax_hits_pitch.scatter(subset['x'], subset['y'], label=result, color=hit_color_map[result], s=40, edgecolors='black', zorder=5)
+                ax_hits_pitch.scatter(subset['x'], subset['y'], label=result,
+                                      color=hit_color_map[result], s=40, edgecolors='black', zorder=5)
 
             ax_hits_pitch.set_xlim(-300, 300)
             ax_hits_pitch.set_ylim(0, 500)
             ax_hits_pitch.set_aspect('equal')
             ax_hits_pitch.axis('off')
-            ax_hits_pitch.legend(title='Hit Type', loc='upper left', fontsize='small', title_fontsize='medium')
+            ax_hits_pitch.legend(
+                title='Hit Type', loc='upper left', fontsize='small', title_fontsize='medium')
             st.pyplot(fig_hits_pitch)
 
             st.markdown("### Pitch Mix by Count")
+            count_df = pidf.dropna(
+                subset=["Balls", "Strikes", "PitchTypeUsed"]).copy()
+            count_df["Count"] = count_df["Balls"].astype(int).astype(
+                str) + "-" + count_df["Strikes"].astype(int).astype(str)
 
-            count_df = pidf.dropna(subset=["Balls", "Strikes", "PitchTypeUsed"]).copy()
-            count_df["Count"] = count_df["Balls"].astype(int).astype(str) + "-" + count_df["Strikes"].astype(int).astype(str)
-
-            count_order = ["0-0", "1-0", "0-1", "2-0", "1-1", "0-2", "3-0", "2-1", "1-2", "3-1", "2-2", "3-2"]
+            count_order = ["0-0", "1-0", "0-1", "2-0", "1-1",
+                           "0-2", "3-0", "2-1", "1-2", "3-1", "2-2", "3-2"]
             count_df = count_df[count_df["Count"].isin(count_order)]
 
-            count_pie_data = count_df.groupby(["Count", "PitchTypeUsed"]).size().unstack(fill_value=0)
+            count_pie_data = count_df.groupby(
+                ["Count", "PitchTypeUsed"]).size().unstack(fill_value=0)
 
-            count_pie_props = count_pie_data.div(count_pie_data.sum(axis=1), axis=0)
+            count_pie_props = count_pie_data.div(
+                count_pie_data.sum(axis=1), axis=0)
 
             positions = {
                 "0-0": (3, 6),
@@ -704,18 +891,23 @@ if position == "Pitcher":
                     for i, size in enumerate(sizes):
                         if size == 0:
                             continue
-                        wedge = plt.matplotlib.patches.Wedge((x, y), 0.4, start * 360, (start + size) * 360, facecolor=pitch_color_map.get(labels[i], "gray"), edgecolor="black")
+                        wedge = plt.matplotlib.patches.Wedge(
+                            (x, y), 0.4, start * 360, (start + size) * 360, facecolor=pitch_color_map.get(labels[i], "gray"), edgecolor="black")
                         ax.add_patch(wedge)
                         start += size
 
-                    ax.text(x, y + 0.55, count, ha='center', va='bottom', fontsize=8, color='gray')
+                    ax.text(x, y + 0.55, count, ha='center',
+                            va='bottom', fontsize=8, color='gray')
 
             ax.set_xlim(0, 7)
             ax.set_ylim(0, 7)
             ax.axis("off")
 
-            for i, ptype in enumerate(count_pie_props.columns): ax.scatter([], [], color=pitch_color_map.get(ptype, "gray"), label=ptype)
-            ax.legend(title="Pitch Type", loc="lower left", fontsize=8, title_fontsize=9)
+            for i, ptype in enumerate(count_pie_props.columns):
+                ax.scatter([], [], color=pitch_color_map.get(
+                    ptype, "gray"), label=ptype)
+            ax.legend(title="Pitch Type", loc="lower left",
+                      fontsize=8, title_fontsize=9)
 
             st.pyplot(fig)
 
@@ -726,7 +918,8 @@ if position == "Pitcher":
             unique_pitch_types = pidf['PitchTypeUsed'].dropna().unique()
 
             colors = plt.cm.get_cmap('tab10', len(unique_pitch_types))
-            pitch_color_map = {ptype: colors(i) for i, ptype in enumerate(unique_pitch_types)}
+            pitch_color_map = {ptype: colors(
+                i) for i, ptype in enumerate(unique_pitch_types)}
 
             for ptype in unique_pitch_types:
                 subset = pidf[pidf['PitchTypeUsed'] == ptype]
@@ -736,53 +929,65 @@ if position == "Pitcher":
                     edgecolors='black', s=60
                 )
 
-            strike_zone = Rectangle((-0.85, 1.5), 1.7, 2.0, linewidth=2, edgecolor='black', facecolor='none')
+            strike_zone = Rectangle(
+                (-0.85, 1.5), 1.7, 2.0, linewidth=2, edgecolor='black', facecolor='none')
             ax_pitch_types.add_patch(strike_zone)
 
-            ax_pitch_types.set_title("All Pitch Locations by Pitch Type (Pitcher's View)")
+            ax_pitch_types.set_title(
+                "All Pitch Locations by Pitch Type (Pitcher's View)")
             ax_pitch_types.set_xlabel("Horizontal Location (ft)")
             ax_pitch_types.set_ylabel("Vertical Location (ft)")
             ax_pitch_types.set_xlim(-2, 2)
             ax_pitch_types.set_ylim(0, 5)
-            ax_pitch_types.legend(title="Pitch Type", fontsize='small', title_fontsize='medium')
+            ax_pitch_types.legend(title="Pitch Type",
+                                  fontsize='small', title_fontsize='medium')
             st.pyplot(fig_pitch_types)
 
             st.markdown("### Hits Allowed by Pitch Type")
             fig_hits_pitch, ax_hits_pitch = plt.subplots(figsize=(6, 6))
             for r in [100, 200, 300, 400]:
-                circle = plt.Circle((0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
+                circle = plt.Circle(
+                    (0, 0), r, color='orange', linestyle='-', linewidth=1.2, fill=False, alpha=0.3)
                 ax_hits_pitch.add_patch(circle)
-                ax_hits_pitch.text(0, r + 5, str(r), ha='center', va='bottom', fontsize=8, color='orange')
+                ax_hits_pitch.text(0, r + 5, str(r), ha='center',
+                                   va='bottom', fontsize=8, color='orange')
 
             draw_baseball_field(ax_hits_pitch)
 
             for ptype in hits['PitchTypeUsed'].dropna().unique():
                 subset = hits[hits['PitchTypeUsed'] == ptype]
                 color = pitch_color_map.get(ptype, 'gray')
-                ax_hits_pitch.scatter(subset['x'], subset['y'], label=ptype, color=color, s=40, edgecolors='black', zorder=5)
+                ax_hits_pitch.scatter(
+                    subset['x'], subset['y'], label=ptype, color=color, s=40, edgecolors='black', zorder=5)
 
             ax_hits_pitch.set_xlim(-300, 300)
             ax_hits_pitch.set_ylim(0, 500)
             ax_hits_pitch.set_aspect('equal')
             ax_hits_pitch.axis('off')
-            ax_hits_pitch.legend(title='Pitch Type', loc='upper left', fontsize='small', title_fontsize='medium')
+            ax_hits_pitch.legend(
+                title='Pitch Type', loc='upper left', fontsize='small', title_fontsize='medium')
             st.pyplot(fig_hits_pitch)
 
             st.markdown("### Whiffs by Pitch Type")
-            whiffs = strike_zone_df[strike_zone_df["PitchCall"] == "StrikeSwinging"]
+            whiffs = strike_zone_df[strike_zone_df["PitchCall"]
+                                    == "StrikeSwinging"]
 
-            unique_pitch_types = sorted(whiffs["PitchTypeUsed"].dropna().unique())
+            unique_pitch_types = sorted(
+                whiffs["PitchTypeUsed"].dropna().unique())
             selected_types = unique_pitch_types
 
             colors = plt.cm.get_cmap('tab10', len(unique_pitch_types))
-            pitch_color_map = {ptype: colors(i) for i, ptype in enumerate(unique_pitch_types)}
+            pitch_color_map = {ptype: colors(
+                i) for i, ptype in enumerate(unique_pitch_types)}
 
             fig2, ax2 = plt.subplots(figsize=(6, 6))
             for ptype in selected_types:
                 subset = whiffs[whiffs["PitchTypeUsed"] == ptype]
-                ax2.scatter(subset["PlateLocSide"], subset["PlateLocHeight"], label=ptype, color=pitch_color_map[ptype], edgecolors='black', s=60)
+                ax2.scatter(subset["PlateLocSide"], subset["PlateLocHeight"],
+                            label=ptype, color=pitch_color_map[ptype], edgecolors='black', s=60)
 
-            strike_zone = Rectangle((-0.85, 1.5), 1.7, 2.0, linewidth=2, edgecolor='black', facecolor='none')
+            strike_zone = Rectangle(
+                (-0.85, 1.5), 1.7, 2.0, linewidth=2, edgecolor='black', facecolor='none')
             ax2.add_patch(strike_zone)
 
             ax2.set_title("Swings and Misses by Pitch Type (Pitcher's view)")
@@ -790,7 +995,8 @@ if position == "Pitcher":
             ax2.set_ylabel("Vertical Location (ft)")
             ax2.set_xlim(-2, 2)
             ax2.set_ylim(0, 5)
-            ax2.legend(title="Pitch Type", fontsize='small', title_fontsize='medium')
+            ax2.legend(title="Pitch Type", fontsize='small',
+                       title_fontsize='medium')
             st.pyplot(fig2)
 
     else:
