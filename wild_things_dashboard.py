@@ -180,6 +180,7 @@ pitch_type_map = {
     "FourSeamFastBall": "Fastball",
     "2-Seam Fastball": "Sinker",
     "TwoSeamFastball": "Sinker",
+    "TwoSeamFastBall": "Sinker",
     "Two-Seam": "Sinker",
     "Sinker": "Sinker",
     "Slider": "Slider",
@@ -226,14 +227,11 @@ for file in csv_files:
 
         if {'PitcherTeam', 'BatterTeam', 'RunsScored'}.issubset(game_df.columns):
             teams = game_df[['PitcherTeam', 'BatterTeam']].iloc[0]
-            team_raw = teams['PitcherTeam'] if teams['PitcherTeam'].startswith(
-                "WAS") else teams['BatterTeam']
+            team_raw = teams['PitcherTeam'] if teams['PitcherTeam'].startswith("WAS") else teams['BatterTeam']
             opponent_raw = teams['BatterTeam'] if team_raw == teams['PitcherTeam'] else teams['PitcherTeam']
 
-            team_score = game_df[game_df['PitcherTeam']
-                                 == opponent_raw]['RunsScored'].sum()
-            opponent_score = game_df[game_df['PitcherTeam']
-                                     == team_raw]['RunsScored'].sum()
+            team_score = game_df[game_df['PitcherTeam'] == opponent_raw]['RunsScored'].sum()
+            opponent_score = game_df[game_df['PitcherTeam'] == team_raw]['RunsScored'].sum()
 
             if team_score > opponent_score:
                 wins += 1
@@ -242,7 +240,7 @@ for file in csv_files:
     except:
         continue
 
-adjusted_wins = wins + 2
+adjusted_wins = wins + 3
 adjusted_losses = losses + 1
 team_record = f"{adjusted_wins}-{adjusted_losses}"
 
