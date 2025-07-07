@@ -160,7 +160,9 @@ stadium_lookup = {
     'SCH_BOO': 'Wintrust Field',
     'WIN_CIT29': 'Ozinga Field',
     "FLO_Y'A": 'Thomas More Stadium',
-    'OTT_TIT': 'Ottawa Stadium'}
+    'OTT_TIT': 'Ottawa Stadium',
+    'MIS_MUD': 'Trustmark Park',
+    'GAT_GRI': 'Grizzlies Ballpark'}
 
 team_name_lookup = {
     'WAS_WIL3': 'Washington',
@@ -170,7 +172,9 @@ team_name_lookup = {
     'SCH_BOO': 'Schaumburg',
     'WIN_CIT29': 'Windy City',
     "FLO_Y'A": 'Florence',
-    'OTT_TIT': 'Ottawa'}
+    'OTT_TIT': 'Ottawa',
+    'MIS_MUD': 'Mississippi',
+    'GAT_GRI': 'Gateway'}
 
 pitch_type_map = {
     "FourSeamFastball": "Fastball",
