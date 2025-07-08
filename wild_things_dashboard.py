@@ -191,7 +191,8 @@ pitch_type_map = {
     "Cutter": "Cutter",
     "Curveball": "Curveball",
     "ChangeUp": "Changeup",
-    "Splitter": "Splitter"}
+    "Splitter": "Splitter",
+    "Sweeper": "Slider"}
 
 pitch_color_map = {
     'Fastball': '#1f77b4',
@@ -206,16 +207,20 @@ csv_files = [f for f in os.listdir(DATA) if f.endswith(".csv")]
 dataframes = [pd.read_csv(os.path.join(DATA, f)) for f in csv_files]
 df_all = pd.concat(dataframes, ignore_index=True)
 df_all.columns = df_all.columns.str.strip()
-df_all["Batter"] = (df_all["Batter"].astype(str).str.strip().str.replace(r"\s*,\s*", ", ", regex=True).str.title())
+df_all["Batter"] = (df_all["Batter"].astype(str).str.strip(
+).str.replace(r"\s*,\s*", ", ", regex=True).str.title())
 
-wild_things_batter_names = (df_all[df_all['BatterTeam'] == 'WAS_WIL3']['Batter'].dropna().drop_duplicates().sort_values())
+wild_things_batter_names = (
+    df_all[df_all['BatterTeam'] == 'WAS_WIL3']['Batter'].dropna().drop_duplicates().sort_values())
 
 batter_display = [f"{name.split(',')[1].strip()} {name.split(',')[0].strip()}" if ',' in name else name
-    for name in wild_things_batter_names]
+                  for name in wild_things_batter_names]
 
-batter_map = {display: original for display, original in zip(batter_display, wild_things_batter_names)}
+batter_map = {display: original for display, original in zip(
+    batter_display, wild_things_batter_names)}
 
-wild_things_pitcher_names = df_all[df_all['PitcherTeam']== 'WAS_WIL3']['Pitcher'].dropna().unique()
+wild_things_pitcher_names = df_all[df_all['PitcherTeam']
+                                   == 'WAS_WIL3']['Pitcher'].dropna().unique()
 wild_things_pitcher_names = sorted(set(wild_things_pitcher_names))
 pitcher_display = [
     f"{name.split(',')[1].strip()} {name.split(',')[0].strip()}" if ',' in name else name for name in wild_things_pitcher_names]
@@ -284,23 +289,27 @@ for file in csv_files:
     except:
         continue
 
-preview_entries = sorted(preview_entries, key=lambda x: x[0] or pd.Timestamp.max, reverse=True)
+preview_entries = sorted(
+    preview_entries, key=lambda x: x[0] or pd.Timestamp.max, reverse=True)
 preview_labels = [entry[1] for entry in preview_entries]
 file_map = {entry[1]: entry[2] for entry in preview_entries}
 
 st.sidebar.title("Player Selection")
-position = st.sidebar.radio("Select Position", ["Hitter", "Pitcher"], horizontal=True, key="position_radio", index=None)
+position = st.sidebar.radio("Select Position", [
+                            "Hitter", "Pitcher"], horizontal=True, key="position_radio", index=None)
 
 selected_player = ""
 display_name = ""
 
 if position == "Hitter":
     display_options = [""] + batter_display
-    display_name = st.sidebar.selectbox("Select a Hitter", display_options, key="hitter_select")
+    display_name = st.sidebar.selectbox(
+        "Select a Hitter", display_options, key="hitter_select")
     selected_player = batter_map.get(display_name, "")
 elif position == "Pitcher":
     display_options = [""] + pitcher_display
-    display_name = st.sidebar.selectbox("Select a Pitcher", display_options, key="pitcher_select")
+    display_name = st.sidebar.selectbox(
+        "Select a Pitcher", display_options, key="pitcher_select")
     selected_player = pitcher_map.get(display_name, "")
 else:
     selected_player = None
@@ -329,7 +338,8 @@ if selected_player != "":
         df = pd.read_csv(os.path.join(DATA, file_map[selected_game]))
     else:
         df = df_all.copy()
-    df["Batter"] = (df["Batter"].astype(str).str.strip().str.replace(r"\s*,\s*", ", ", regex=True).str.title())
+    df["Batter"] = (df["Batter"].astype(str).str.strip().str.replace(
+        r"\s*,\s*", ", ", regex=True).str.title())
 
 else:
     df = df_all.copy()
