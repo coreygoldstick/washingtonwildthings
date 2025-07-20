@@ -162,7 +162,8 @@ stadium_lookup = {
     "FLO_Y'A": 'Thomas More Stadium',
     'OTT_TIT': 'Ottawa Stadium',
     'MIS_MUD': 'Trustmark Park',
-    'GAT_GRI': 'Grizzlies Ballpark'}
+    'GAT_GRI': 'Grizzlies Ballpark',
+    'SUS_COU1': 'Skylands Stadium'}
 
 team_name_lookup = {
     'WAS_WIL3': 'Washington',
@@ -174,7 +175,8 @@ team_name_lookup = {
     "FLO_Y'A": 'Florence',
     'OTT_TIT': 'Ottawa',
     'MIS_MUD': 'Mississippi',
-    'GAT_GRI': 'Gateway'}
+    'GAT_GRI': 'Gateway',
+    'SUS_COU1': 'Sussex County'}
 
 pitch_type_map = {
     "FourSeamFastball": "Fastball",
