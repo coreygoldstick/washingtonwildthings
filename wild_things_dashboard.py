@@ -163,7 +163,9 @@ stadium_lookup = {
     'OTT_TIT': 'Ottawa Stadium',
     'MIS_MUD': 'Trustmark Park',
     'GAT_GRI': 'Grizzlies Ballpark',
-    'SUS_COU1': 'Skylands Stadium'}
+    'SUS_COU1': 'Skylands Stadium',
+    'TRO_AIG': 'Stade Quillorama',
+    'QUE_CAP': 'Stade Canac'}
 
 team_name_lookup = {
     'WAS_WIL3': 'Washington',
@@ -176,7 +178,9 @@ team_name_lookup = {
     'OTT_TIT': 'Ottawa',
     'MIS_MUD': 'Mississippi',
     'GAT_GRI': 'Gateway',
-    'SUS_COU1': 'Sussex County'}
+    'SUS_COU1': 'Sussex County',
+    'TRO_AIG': 'Trois-Rivières',
+    'QUE_CAP': 'Québec'}
 
 pitch_type_map = {
     "FourSeamFastball": "Fastball",
